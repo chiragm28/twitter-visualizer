@@ -13,9 +13,15 @@ def get_kafka_client():
 
 class StdOutListener(StreamListener):
     def on_data(self, data):
+        print("works")
         print(data)
-        client = get_kafka_client()
-        topic = client.topics["twitterdata1"]
+        # filter data containing location details
+        message = json.loads(data)
+        if message["place"] is not None:
+            client = get_kafka_client()
+            topic = client.topics["twitterdata1"]
+            producer = topic.get_sync_producer()
+            producer.produce(data.encode("ascii"))
         return True
 
     def on_error(self, status):
@@ -27,5 +33,5 @@ if __name__ == "__main__":
     auth.set_access_token(credentials.Access_Token, credentials.Access_Token_Secret)
     listener = StdOutListener()
     stream = Stream(auth, listener)
-    stream.filter(track=["codeanddogs"])
+    stream.filter(locations=[-180, -90, 180, 90])
 
